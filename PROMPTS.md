@@ -633,3 +633,61 @@ Pekerjaan untuk **US-10: Hapus produk** telah selesai.
    - Buka jendela *incognito* / penyamaran.
    - Mengakses `/admin` tetap dialihkan ke `/admin/login` oleh `proxy.js` (US-06).
    - Server Action `hapusProduk` tidak dapat dieksekusi oleh pengguna yang tidak terautentikasi dan dilindungi ganda oleh Row Level Security (RLS) Supabase.
+
+### US-11 Filter kategori atau pencarian
+**Prompt:**
+Baca AGENTS.md dan docs/user-stories.md bagian US-11.
+
+Tambahkan fitur pencarian nama produk dan filter berdasarkan kategori pada halaman katalog utama app/page.jsx.
+
+Pengunjung dapat mengetik nama produk untuk mencari produk yang sesuai dan memilih kategori untuk menyaring daftar produk. Kategori harus diambil dari data produk yang tersedia, bukan ditulis secara manual. Sediakan pilihan "Semua kategori" untuk menampilkan seluruh produk.
+
+Pencarian dan filter harus bisa digunakan bersamaan. Jika tidak ada produk yang cocok, tampilkan pesan "Produk tidak ditemukan". Jika tabel produk memang kosong, tampilkan pesan "Belum ada produk".
+
+Pertahankan pengambilan data dari Supabase di sisi server sesuai US-01. Implementasikan interaksi pencarian dan filter menggunakan Client Component terpisah jika diperlukan, dengan mengirimkan data produk dari Server Component. Jangan mengubah desain kartu produk, detail produk, atau tombol WhatsApp.
+
+**Hasil:**
+Viewed user-stories.md:82-90
+Viewed page.jsx:1-60
+Created KatalogProduk.jsx
+Created page.jsx
+Ran command: Test build for US-11 (`npm run build`)
+Created check-catalog-html.js
+Ran command: Run check-catalog-html.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\check-catalog-html.js`)
+Ran command: Verify final build passes (`npm run build`)
+
+Pekerjaan untuk **US-11: Filter kategori atau pencarian** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [components/KatalogProduk.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/KatalogProduk.jsx) *(Baru)*
+   - Client Component yang mengelola interaksi pencarian nama produk dan penyaringan kategori secara reaktif.
+   - **Kategori Dinamis**: Mengambil daftar kategori unik langsung dari data produk yang tersedia (`Set`), ditambah opsi default `"Semua kategori"`.
+   - **Pencarian & Filter Bersamaan**: Menyaring produk dengan memadukan input teks (case-insensitive & trimmed) serta pilihan kategori secara simultan.
+   - **Kondisi Tanpa Hasil**: Menampilkan pesan `"Produk tidak ditemukan"` jika kombinasi kata kunci/kategori tidak menghasilkan produk yang cocok.
+   - Menggunakan komponen [`KartuProduk`](file:///c:/Users/USER/Documents/katalog-umkm/components/KartuProduk.jsx) tanpa mengubah desain tampilannya.
+
+2. [app/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/page.jsx) *(Diperbarui)*
+   - Tetap berfungsi sebagai Server Component yang mengambil data produk dari tabel `produk` di Supabase (US-01).
+   - Menampilkan `"Belum ada produk"` jika tabel produk memang kosong dari database.
+   - Mengoper seluruh data produk ke `KatalogProduk` untuk penanganan pencarian dan filter di sisi client tanpa perlu memanggil Supabase dari browser.
+
+---
+
+### Cara Mengetes
+
+1. **Buka halaman utama**:
+   - Kunjungi `http://localhost:3000/`.
+   - Di bawah judul *"Produk kami"*, periksa kolom pencarian *"Cari nama produk..."* dan tombol filter kategori yang muncul secara otomatis sesuai kategori produk di database (misal: *Semua kategori*, *Minuman*, *Camilan*, dll).
+2. **Uji Filter Kategori**:
+   - Klik salah satu kategori (misal: *Minuman*) → hanya produk dalam kategori tersebut yang muncul.
+   - Klik *Semua kategori* → seluruh produk kembali ditampilkan.
+3. **Uji Pencarian Nama Produk**:
+   - Ketik nama produk pada kolom pencarian (misal: *kopi*) → hanya produk yang namanya mengandung kata tersebut yang muncul.
+4. **Uji Penggunaan Bersamaan**:
+   - Pilih kategori tertentu, lalu ketik kata kunci yang cocok dengan produk di kategori tersebut.
+   - Ketik kata kunci yang tidak ada pada kategori yang dipilih (misal: mencari produk camilan saat kategori minuman aktif) → halaman menampilkan pesan:
+     > *Produk tidak ditemukan*
+5. **Uji Kondisi Database Kosong**:
+   - Jika tabel produk di Supabase kosong, halaman akan tetap menampilkan:
+     > *Belum ada produk*
