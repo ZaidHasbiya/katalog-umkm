@@ -691,3 +691,75 @@ Pekerjaan untuk **US-11: Filter kategori atau pencarian** telah selesai.
 5. **Uji Kondisi Database Kosong**:
    - Jika tabel produk di Supabase kosong, halaman akan tetap menampilkan:
      > *Belum ada produk*
+
+### US-12 Pilih jumlah atau varian
+**Prompt:**
+Baca AGENTS.md, docs/user-stories.md bagian US-12, dan docs/rancangan-teknis.md bagian Pesan WhatsApp (US-03).
+
+Kembangkan halaman detail produk agar pengunjung dapat memilih jumlah produk sebelum memesan. Gunakan input jumlah dengan nilai awal 1 dan validasi agar jumlah minimal 1.
+
+Jika struktur tabel produk sudah menyediakan informasi varian, seperti ukuran atau pilihan rasa, tampilkan pilihan varian yang tersedia untuk produk tersebut. Jangan membuat pilihan varian fiktif jika datanya belum tersedia. Jika database belum memiliki kolom varian, implementasikan pilihan jumlah saja dan jelaskan keterbatasannya.
+
+Ubah components/TombolWhatsApp.jsx agar pesan otomatis mencantumkan nama produk, harga satuan dalam format rupiah, jumlah, varian jika dipilih, dan total harga jika jumlah dapat dihitung dari harga satuan.
+
+Pertahankan nomor WhatsApp dari lib/toko.js, gunakan encodeURIComponent untuk isi pesan, dan buka tautan WhatsApp di tab baru. Pastikan tombol tetap berfungsi di HP dan laptop serta validasi jumlah dilakukan dengan benar.
+
+**Hasil:**
+Viewed page.jsx:1-43
+Viewed TombolWhatsApp.jsx:1-22
+Created TombolWhatsApp.jsx
+Ran command: Test build for US-12 (`npm run build`)
+Created check-detail-html.js
+Ran command: Run check-detail-html.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\check-detail-html.js`)
+Ran command: Final build check (`npm run build`)
+
+Pekerjaan untuk **US-12: Pilih jumlah atau varian** telah selesai.
+
+### Keterangan Terkait Varian Database
+
+> [!NOTE]
+> Pada skema database Supabase saat ini (`docs/schema.sql`), tabel `produk` hanya memiliki kolom: `id`, `nama`, `harga`, `deskripsi`, `foto_url`, `kategori`, dan `created_at`. Belum ada kolom khusus untuk varian (seperti rasa atau ukuran).
+> Sesuai instruksi untuk **tidak membuat data varian fiktif**, halaman difokuskan pada **pemilihan kuantitas / jumlah produk**, namun komponen [`TombolWhatsApp`](file:///c:/Users/USER/Documents/katalog-umkm/components/TombolWhatsApp.jsx) sudah siap mendukung varian jika data varian (`produk.varian`) tersedia di masa depan.
+
+---
+
+### File yang Dibuat & Diubah
+
+1. [components/TombolWhatsApp.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/TombolWhatsApp.jsx)
+   - Menambahkan antarmuka pemilihan jumlah produk:
+     - Input kuantitas dengan nilai awal `1`.
+     - Validasi nilai minimal `1` (nilai di bawah 1 atau non-angka otomatis disesuaikan ke 1).
+     - Tombol interaktif plus (`+`) dan minus (`-`) yang mudah ditekan di HP maupun desktop.
+     - Penampil kalkulasi total harga secara *real-time* saat jumlah lebih dari 1.
+   - Memperbarui format pesan otomatis WhatsApp agar rapi dan lengkap:
+     - Nama produk
+     - Harga satuan (format rupiah)
+     - Jumlah produk yang dipesan
+     - Total harga (perkalian harga satuan \(\times\) kuantitas)
+     - Varian produk (otomatis disertakan jika data varian tersedia)
+   - Tetap menggunakan nomor toko dari [lib/toko.js](file:///c:/Users/USER/Documents/katalog-umkm/lib/toko.js), teks di-*encode* dengan `encodeURIComponent`, dan tautan dibuka di tab baru (`target="_blank" rel="noopener noreferrer"`).
+
+---
+
+### Cara Mengetes
+
+1. **Buka halaman detail salah satu produk**:
+   - Kunjungi `http://localhost:3000/produk/1`.
+2. **Uji Pengaturan Jumlah**:
+   - Nilai awal jumlah adalah `1`.
+   - Klik tombol `+` untuk menambah jumlah (misal menjadi `3`).
+   - Perhatikan teks kalkulasi total harga otomatis diperbarui.
+   - Klik tombol `-` hingga mencapai `1`. Tombol `-` akan dinonaktifkan (`disabled`) saat jumlah bernilai 1.
+   - Coba ketik manual angka `0` atau angka negatif pada kotak input → sistem secara otomatis memvalidasi minimal 1.
+3. **Uji Pesan WhatsApp**:
+   - Atur jumlah (misalnya: `2`).
+   - Klik tombol **Pesan via WhatsApp**.
+   - Tab baru WhatsApp akan terbuka dengan pesan terformat rapi:
+     ```text
+     Halo, saya ingin memesan:
+     - Nama produk: Kopi Spesial
+     - Harga satuan: Rp 50.000
+     - Jumlah: 2
+     - Total harga: Rp 100.000
+
+     Apakah masih tersedia?
