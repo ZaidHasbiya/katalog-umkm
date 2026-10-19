@@ -212,3 +212,58 @@ export async function ubahProduk(prevState, formData) {
   revalidatePath("/");
   redirect("/admin");
 }
+
+export async function hapusProduk(idOrFormData) {
+  let id = "";
+  if (idOrFormData instanceof FormData) {
+    id = idOrFormData.get("id")?.toString()?.trim() || "";
+  } else if (typeof idOrFormData === "string" || typeof idOrFormData === "number") {
+    id = String(idOrFormData).trim();
+  } else if (idOrFormData?.id) {
+    id = String(idOrFormData.id).trim();
+  }
+
+  if (!id) {
+    return { error: "ID produk tidak valid." };
+  }
+
+  try {
+    const supabase = await createSessionClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    // Wajib periksa login di server sebelum menjalankan aksi yang mengubah data
+    if (userError || !user) {
+      return { error: "Sesi tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali." };
+    }
+
+    // Periksa apakah produk ada sebelum dihapus
+    const { data: produkAda, error: checkError } = await supabase
+      .from("produk")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (checkError || !produkAda) {
+      return { error: "Produk tidak ditemukan atau sudah dihapus." };
+    }
+
+    const { error: deleteError } = await supabase
+      .from("produk")
+      .delete()
+      .eq("id", id);
+
+    if (deleteError) {
+      return { error: deleteError.message || "Gagal menghapus produk." };
+    }
+  } catch (err) {
+    return { error: err.message || "Terjadi kesalahan saat menghapus produk." };
+  }
+
+  revalidatePath("/admin");
+  revalidatePath(`/produk/${id}`);
+  revalidatePath("/");
+  return { success: true };
+}

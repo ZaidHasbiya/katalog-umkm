@@ -572,3 +572,64 @@ Pekerjaan untuk **US-09: Ubah produk** telah selesai.
    - Ubah salah satu data (misalnya nama atau harga).
    - Klik **Simpan perubahan**.
    - Browser akan diarahkan kembali ke `/admin` dan menampilkan data produk yang baru saja diperbarui. Perubahan juga langsung tercermin pada halaman katalog utama (`/`) dan detail produk (`/produk/[id]`).
+
+### US-10 Hapus produk
+**Prompt:**
+Baca AGENTS.md, aturan keamanan, dan docs/user-stories.md bagian US-10.
+
+Tambahkan tombol "Hapus" pada setiap produk di halaman admin /admin. Saat tombol ditekan, tampilkan dialog konfirmasi sebelum produk benar-benar dihapus.
+
+Jika admin menyetujui konfirmasi, hapus produk berdasarkan id dari tabel "produk" di Supabase menggunakan Server Action di server dan koneksi Supabase yang sudah tersedia. Setelah berhasil, perbarui daftar produk agar produk yang dihapus tidak muncul lagi.
+
+Tampilkan pesan error yang jelas jika proses penghapusan gagal atau produk tidak ditemukan.
+
+WAJIB: Server Action penghapusan harus memeriksa autentikasi admin di server sebelum melakukan perubahan database. Jangan mengandalkan tombol yang disembunyikan atau proteksi halaman saja. Pastikan pengguna yang belum login tidak dapat menghapus produk dengan memanggil Server Action secara langsung. Pertahankan tampilan aplikasi dan proteksi US-06.
+
+**Hasil:**
+Viewed user-stories.md:79-85
+Viewed TabelProduk.jsx:1-47
+Viewed actions.js:180-215
+Edited actions.js
+Created TabelProduk.jsx
+Ran command: Test build for US-10 (`npm run build`)
+Ran command: Verify unauthenticated delete fails (`node --env-file=.env.local --input-type=module -e "import { createServerClient } from '@supabase/ssr'; const c = createServerClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => [], setAll: () => {} } }); const { data, error } = await c.from('produk').delete().eq('id', 1).select(); console.log('Unauthenticated delete data:', data, 'error:', error?.message);"`)
+Ran command: Final build check (`npm run build`)
+
+Pekerjaan untuk **US-10: Hapus produk** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js)
+   - Menambahkan Server Action `hapusProduk`:
+     - **Verifikasi Autentikasi Server**: Memeriksa sesi login admin melalui `supabase.auth.getUser()`. Panggilan tanpa sesi login yang valid akan langsung ditolak (`"Sesi tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali."`).
+     - **Validasi Keberadaan Produk**: Memeriksa apakah produk dengan ID yang diminta ada di tabel `produk` (`maybeSingle()`). Jika tidak ada, mengembalikan pesan `"Produk tidak ditemukan atau sudah dihapus."`.
+     - **Penghapusan Data**: Menjalankan `.delete().eq("id", id)` pada tabel `produk` menggunakan koneksi sesi admin.
+     - **Revalidasi**: Menjalankan `revalidatePath("/admin")`, `revalidatePath("/produk/[id]")`, dan `revalidatePath("/")` agar daftar produk diperbarui secara instan.
+
+2. [components/TabelProduk.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/TabelProduk.jsx)
+   - Menambahkan interaksi konfirmasi (`window.confirm("Apakah Anda yakin ingin menghapus produk ...?")`) sebelum memanggil Server Action `hapusProduk`.
+   - Jika pengguna membatalkan (klik *Cancel*), penghapusan tidak dijalankan.
+   - Jika pengguna mengonfirmasi (klik *OK*), tombol menampilkan status *"Menyimpan/Menghapus..."* dalam keadaan `disabled` selama proses berlangsung.
+   - Menampilkan kotak pesan error di atas tabel jika proses penghapusan gagal.
+   - Mempertahankan tata letak dan desain tabel yang sudah ada.
+
+---
+
+### Cara Mengetes
+
+1. **Pastikan sudah login sebagai admin**:
+   - Buka `http://localhost:3000/admin/login` dan lakukan login jika belum.
+2. **Uji Batal Hapus (Konfirmasi Cancel)**:
+   - Di halaman `http://localhost:3000/admin`, klik tombol **Hapus** pada salah satu baris produk.
+   - Dialog konfirmasi browser akan muncul: *"Apakah Anda yakin ingin menghapus produk ...?"*.
+   - Klik **Cancel** / **Batal**.
+   - Produk tetap ada dan tidak dihapus dari daftar.
+3. **Uji Hapus Produk (Konfirmasi OK)**:
+   - Buat produk uji coba terlebih dahulu melalui tombol **Tambah produk** (US-08) jika ingin mengetes tanpa menghapus data produk utama.
+   - Klik tombol **Hapus** pada produk uji coba tersebut.
+   - Klik **OK** pada dialog konfirmasi.
+   - Tombol berubah menjadi *"Menghapus..."* sejenak, lalu produk tersebut otomatis hilang dari tabel `/admin` dan juga tidak muncul lagi di katalog utama (`/`).
+4. **Uji Keamanan (Tanpa Login)**:
+   - Buka jendela *incognito* / penyamaran.
+   - Mengakses `/admin` tetap dialihkan ke `/admin/login` oleh `proxy.js` (US-06).
+   - Server Action `hapusProduk` tidak dapat dieksekusi oleh pengguna yang tidak terautentikasi dan dilindungi ganda oleh Row Level Security (RLS) Supabase.
