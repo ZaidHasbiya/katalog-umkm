@@ -324,15 +324,68 @@ Pekerjaan untuk **US-05: Ganti password** telah selesai.
    - Masukkan password baru dan konfirmasi yang sama (minimal 8 karakter).
    - Klik **Simpan password** → Muncul pesan sukses: *"Password berhasil diganti."*
    - Coba klik tombol **Keluar**, lalu login kembali di `/admin/login` menggunakan password baru tersebut.
-   
+
 **Perbaikan:**
 
 ## US-06 Proteksi halaman admin
 
 **Prompt:**
+Baca AGENTS.md aturan keamanan nomor 3 dan 4, dan docs/user-stories.md bagian US-06.
+
+Buat file proxy.js di root proyek (Next.js 16). Semua rute /admin kecuali /admin/login wajib login dengan Supabase Auth; kalau belum login, alihkan ke /admin/login. Pastikan juga setiap Server Action yang mengubah data memeriksa login di server. Hapus CatatanBelumAktif dari halaman /admin.
 
 **Hasil:**
+Viewed user-stories.md:55-68
+Viewed rancangan-teknis.md:1-20
+Viewed page.jsx:1-28
+Ran command: Search for proxy in node_modules/next (`Get-ChildItem -Path node_modules\next -Recurse -Filter "*proxy*" | Select-Object -First 10 FullName`)
+Ran command: Check middleware/proxy constant (`Select-String -Path "node_modules\next\dist\lib\constants.js" -Pattern "middleware|proxy"`)
+Ran command: Find PROXY_FILENAME in next/dist/build (`Select-String -Path "node_modules\next\dist\build\*.js" -Pattern "PROXY_FILENAME|proxy"`)
+Ran command: Search export name in Next.js build analysis (`Select-String -Path "node_modules\next\dist\build\analysis\*.js" -Pattern "proxy"`)
+Ran command: Check matcher config (`Select-String -Path "node_modules\next\dist\build\analysis\get-page-static-info.js" -Pattern "matcher"`)
+Ran command: Search for Server Actions (`Select-String -Path "app\**\*.js", "app\**\*.jsx" -Pattern "use server"`)
+Viewed page.jsx:1-16
+Created proxy.js
+Ran command: Check build with proxy.js (`npm run build`)
+Created actions.js
+Created page.jsx
+Ran command: Test build with updated files (`npm run build`)
+Created test-proxy.js
+Ran command: Run test-proxy.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\test-proxy.js`)
+Ran command: Verify no NEXT_PUBLIC in codebase (`Select-String -Path "proxy.js", "app\**\*", "components\**\*", "lib\**\*" -Pattern "NEXT_PUBLIC"`)
+Ran command: Search for NEXT_PUBLIC in files (`Get-ChildItem -Path proxy.js, app, components, lib -File -Recurse | Select-String -Pattern "NEXT_PUBLIC"`)
 
+Pekerjaan untuk **US-06: Proteksi halaman admin** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [proxy.js](file:///c:/Users/USER/Documents/katalog-umkm/proxy.js) *(Baru di root proyek)*
+   - Menggunakan konvensi Next.js 16 (`proxy.js` pengganti `middleware.js`) dengan matcher `["/admin/:path*"]`.
+   - Membaca sesi Supabase Auth memakai `@supabase/ssr` dengan cookie request/response.
+   - Mengalihkan pengunjung yang belum login ke `/admin/login` jika mencoba mengakses rute apa pun di bawah `/admin` (kecuali `/admin/login`).
+
+2. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js) *(Diperbarui)*
+   - Memastikan Server Action yang memodifikasi data (`gantiPasswordAdmin`) selalu memeriksa status login pengguna di server melalui `supabase.auth.getUser()` sebelum memproses data apa pun.
+
+3. [app/admin/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/page.jsx) *(Diperbarui)*
+   - Menghapus komponen `CatatanBelumAktif` dan import-nya dari halaman `/admin`.
+
+---
+
+### Cara Mengetes
+
+1. **Uji Proteksi Halaman Admin (Tanpa Login / Mode Incognito)**:
+   - Buka browser dalam mode penyamaran (*incognito / private window*).
+   - Akses `http://localhost:3000/admin` → Langsung dialihkan ke `http://localhost:3000/admin/login`.
+   - Akses `http://localhost:3000/admin/password` → Langsung dialihkan ke `http://localhost:3000/admin/login`.
+   - Akses `http://localhost:3000/admin/produk/baru` → Langsung dialihkan ke `http://localhost:3000/admin/login`.
+2. **Uji Rute Publik**:
+   - Akses `http://localhost:3000/` dan `http://localhost:3000/produk/1` → Halaman publik tetap dapat dibuka normal tanpa pengalihan.
+3. **Uji Akses Setelah Login**:
+   - Di `http://localhost:3000/admin/login`, lakukan login dengan akun admin Anda.
+   - Setelah berhasil masuk, buka `http://localhost:3000/admin` atau menu admin lainnya → Halaman admin terbuka normal tanpa dialihkan.
+   - Periksa bahwa halaman `/admin` sudah bersih dari kotak `CatatanBelumAktif`.
+   
 **Perbaikan:**
 
 ## Debugging dan fitur bonus

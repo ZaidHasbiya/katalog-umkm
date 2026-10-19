@@ -55,18 +55,6 @@ export async function keluarAdmin() {
 }
 
 export async function gantiPasswordAdmin(prevState, formData) {
-  const data = formData instanceof FormData ? formData : prevState;
-  const passwordBaru = data?.get?.("password_baru")?.toString() || "";
-  const konfirmasiPassword = data?.get?.("konfirmasi_password")?.toString() || "";
-
-  if (!passwordBaru || passwordBaru.length < 8) {
-    return { error: "Password baru minimal 8 karakter." };
-  }
-
-  if (passwordBaru !== konfirmasiPassword) {
-    return { error: "Password baru dan konfirmasi password tidak sama." };
-  }
-
   try {
     const supabase = await createSessionClient();
     const {
@@ -74,8 +62,21 @@ export async function gantiPasswordAdmin(prevState, formData) {
       error: userError,
     } = await supabase.auth.getUser();
 
+    // Wajib periksa login di server sebelum menjalankan aksi yang mengubah data
     if (userError || !user) {
       return { error: "Sesi tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali." };
+    }
+
+    const data = formData instanceof FormData ? formData : prevState;
+    const passwordBaru = data?.get?.("password_baru")?.toString() || "";
+    const konfirmasiPassword = data?.get?.("konfirmasi_password")?.toString() || "";
+
+    if (!passwordBaru || passwordBaru.length < 8) {
+      return { error: "Password baru minimal 8 karakter." };
+    }
+
+    if (passwordBaru !== konfirmasiPassword) {
+      return { error: "Password baru dan konfirmasi password tidak sama." };
     }
 
     const { error: updateError } = await supabase.auth.updateUser({
