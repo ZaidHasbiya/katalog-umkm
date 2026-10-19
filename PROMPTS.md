@@ -190,8 +190,81 @@ Pekerjaan untuk **US-03: Pesan via WhatsApp** telah selesai.
 ## US-04 Login admin
 
 **Prompt:**
+Baca AGENTS.md bagian aturan keamanan dan docs/user-stories.md bagian US-04.
+
+Buat login admin memakai Supabase Auth (email dan password) dengan @supabase/ssr dan cookie, memakai SUPABASE_URL dan SUPABASE_PUBLISHABLE_KEY. Login diproses dengan Server Action di app/admin/actions.js dan disambungkan ke form di app/admin/login/page.jsx. Login berhasil diarahkan ke /admin; login gagal menampilkan pesan error yang jelas di halaman login. Buat juga tombol "Keluar" di components/NavAdmin.jsx berfungsi: mengakhiri sesi lalu kembali ke /admin/login. Jangan ubah tampilan. Hapus CatatanBelumAktif dari halaman login.
 
 **Hasil:**
+Viewed user-stories.md:36-48
+Viewed page.jsx:1-29
+Viewed NavAdmin.jsx:1-19
+Viewed Tombol.jsx:1-26
+Viewed Input.jsx:1-16
+Ran command: Inspect @supabase/ssr (`node -e "const ssr = require('@supabase/ssr'); console.log(Object.keys(ssr));"`)
+Ran command: Test createServerClient from @supabase/ssr (`node --env-file=.env.local -e "const { createServerClient } = require('@supabase/ssr'); const c = createServerClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => [], setAll: () => {} } }); console.log(c.auth ? 'Auth exists' : 'Auth missing');"`)
+Ran command: Search for use client (`Select-String -Path "components\*.jsx", "app\**\*.jsx" -Pattern "use client"`)
+Viewed FormProduk.jsx:1-35
+Viewed page.jsx:1-43
+Ran command: Check Supabase Auth users (`node --env-file=.env.local -e "const { createClient } = require('@supabase/supabase-js'); const c = createClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_SECRET_KEY); c.auth.admin.listUsers().then(r => console.log('Users count:', r.data?.users?.length, 'Users:', r.data?.users?.map(u => ({ id: u.id, email: u.email }))));"`)
+Created server.js
+Created actions.js
+Created page.jsx
+Created NavAdmin.jsx
+Ran command: Test production build for US-04 (`npm run build`)
+Checked task Test production build for US-04
+Created test-login.mjs
+Ran command: Run test-login.mjs (`node --env-file=.env.local C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\test-login.mjs`)
+Ran command: Check /admin/login HTML (`node -e "fetch('http://localhost:3000/admin/login').then(r=>r.text()).then(t=>{ console.log('Has Masuk admin:', t.includes('Masuk admin')); console.log('Has CatatanBelumAktif:', t.includes('CatatanBelumAktif') || t.includes('Login belum berfungsi')); console.log('Has form:', t.includes('<form')); console.log('Has email input:', t.includes('name=\"email\"')); console.log('Has password input:', t.includes('name=\"password\"')); });"`)
+Created check-login-html.js
+Ran command: Run check-login-html.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\check-login-html.js`)
+Created check-admin-html.js
+Ran command: Run check-admin-html.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\check-admin-html.js`)
+Created test-ssr-auth.mjs
+Ran command: Run test-ssr-auth.mjs (`node --env-file=.env.local C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\test-ssr-auth.mjs`)
+Ran command: Test Supabase SSR auth (`node --env-file=.env.local --input-type=module -e "import { createServerClient } from '@supabase/ssr'; const c = createServerClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => [], setAll: () => {} } }); const { error } = await c.auth.signInWithPassword({ email: 'admin@gmail.com', password: 'wrong' }); console.log('Auth error message:', error?.message);"`)
+Ran command: Verify production build passes (`npm run build`)
+
+Pekerjaan untuk **US-04: Login admin** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [lib/supabase/server.js](file:///c:/Users/USER/Documents/katalog-umkm/lib/supabase/server.js) *(Diperbarui)*
+   - Menambahkan fungsi `createSessionClient()` memakai `@supabase/ssr` (`createServerClient`) dengan cookie store (`cookies()` dari `next/headers`).
+   - Menggunakan `SUPABASE_URL` dan `SUPABASE_PUBLISHABLE_KEY` dari environment variable.
+
+2. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js) *(Baru)*
+   - Membuat Server Action `loginAdmin`:
+     - Memproses autentikasi email & password menggunakan `supabase.auth.signInWithPassword`.
+     - Jika berhasil: me-refresh cache dan mengarahkan ke `/admin`.
+     - Jika gagal: mengembalikan pesan error yang jelas (misal: `"Email atau password salah."`).
+   - Membuat Server Action `keluarAdmin`:
+     - Memanggil `supabase.auth.signOut()` untuk mengakhiri sesi cookie admin.
+     - Mengarahkan kembali ke `/admin/login`.
+
+3. [app/admin/login/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/login/page.jsx) *(Diperbarui)*
+   - Menghubungkan form login ke Server Action `loginAdmin` menggunakan hook `useActionState`.
+   - Menampilkan kotak pesan error jika login gagal.
+   - Menghapus komponen `CatatanBelumAktif` tanpa mengubah tata letak dan tampilan halaman.
+   - Tetap mematuhi aturan keamanan: tidak ada client Supabase yang dibuat di sisi browser.
+
+4. [components/NavAdmin.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/NavAdmin.jsx) *(Diperbarui)*
+   - Memfungsikan tombol "Keluar" menggunakan form action yang memanggil Server Action `keluarAdmin`.
+   - Tampilan visual tombol tetap sama persis dengan aslinya.
+
+---
+
+### Cara Mengetes
+
+1. **Uji Login Gagal**:
+   - Buka halaman login di browser: `http://localhost:3000/admin/login`.
+   - Masukkan email atau password yang salah, lalu klik **Masuk**.
+   - Periksa bahwa halaman menampilkan pesan error: *"Email atau password salah."* dan tidak mengalihkan halaman.
+2. **Uji Login Berhasil**:
+   - Masukkan email dan password admin yang sesuai dengan akun Supabase Auth toko Anda, lalu klik **Masuk**.
+   - Anda akan diarahkan ke halaman `/admin`.
+3. **Uji Tombol Keluar**:
+   - Pada menu navigasi admin di bagian atas, klik tautan/tombol **Keluar**.
+   - Sesi cookie Supabase akan diakhiri dan browser akan diarahkan kembali ke `/admin/login`.
 
 **Perbaikan:**
 
