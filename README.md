@@ -77,4 +77,4 @@ Urutan yang disarankan: US-01, US-02, US-03, US-04, US-05, US-06, lalu fitur bon
 - **Nama usaha:*Sruputra**
 - **Pembuat:*Zaid Hasbiya Abrar**
 - **Link aplikasi:*https://katalog-umkm-woad.vercel.app/**
-- **Fitur bonus yang dikerjakan:**
+- **Fitur bonus yang dikerjakan: ### US-07 List Produk, ### US-08 Tambah produk, ### US-09 Ubah produk, ### US-10 Hapus produk, ### US-11 Filter kategori atau pencarian, ### US-12 Pilih jumlah atau varian**
