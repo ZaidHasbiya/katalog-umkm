@@ -498,3 +498,77 @@ Pekerjaan untuk **US-08: Tambah produk** telah selesai.
      - Deskripsi: `Keripik tempe gurih dan renyah.`
    - Klik **Simpan produk**.
    - Anda akan diarahkan kembali ke `/admin` dan produk yang baru ditambahkan langsung muncul pada tabel produk admin maupun katalog utama (`/`).
+
+### US-09 Ubah produk
+**Prompt:**
+Baca AGENTS.md, aturan keamanan, docs/user-stories.md bagian US-09, dan struktur tabel produk di docs/schema.sql.
+
+Buat fitur ubah produk melalui halaman /admin/produk/[id]/ubah. Ambil data produk lama dari tabel "produk" di Supabase berdasarkan id pada URL, kemudian tampilkan data tersebut sebagai nilai awal form.
+
+Sediakan form untuk mengubah kolom produk yang memang tersedia di database, termasuk nama, kategori, harga, deskripsi, dan foto jika didukung proyek. Saat form dikirim, simpan perubahan ke database menggunakan Server Action di server dan koneksi Supabase yang sudah tersedia.
+
+Validasi data di server dan tampilkan pesan error yang jelas jika produk tidak ditemukan atau proses penyimpanan gagal. Jika berhasil, arahkan kembali ke /admin dan tampilkan data terbaru.
+
+Pastikan setiap Server Action untuk mengubah produk memeriksa autentikasi admin di server sebelum melakukan perubahan database. Pertahankan tampilan aplikasi dan jangan melemahkan proteksi US-06.
+
+**Hasil:**
+Viewed page.jsx:1-25
+Viewed actions.js:130-148
+Edited actions.js
+Created FormProduk.jsx
+Created page.jsx
+Created page.jsx
+Ran command: Test build for US-09 (`npm run build`)
+Created test-ubah-proxy.js
+Ran command: Run test-ubah-proxy.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\test-ubah-proxy.js`)
+Created test-unauth-update.mjs
+Ran command: Verify update is protected by RLS (`node --env-file=.env.local --input-type=module -e "import { createServerClient } from '@supabase/ssr'; const cookies = new Map(); const c = createServerClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => [], setAll: () => {} } }); const { data, error } = await c.from('produk').update({ nama: 'Hacked' }).eq('id', 1).select(); console.log('Unauthenticated update data:', data, 'error:', error?.message);"`)
+Ran command: Final build check (`npm run build`)
+
+Pekerjaan untuk **US-09: Ubah produk** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js)
+   - Menambahkan Server Action `ubahProduk`:
+     - Memeriksa autentikasi admin di server menggunakan `supabase.auth.getUser()`.
+     - Memvalidasi data input di server (`id` wajib, `nama` wajib, `kategori` wajib, dan `harga` valid \(\ge 0\)).
+     - Melakukan pembaruan baris data pada tabel `produk` di Supabase (`update(...)` where `eq("id", id)`).
+     - Mengembalikan pesan error jika validasi atau penyimpanan gagal.
+     - Melakukan revalidasi cache (`revalidatePath("/admin")`, `revalidatePath("/produk/[id]")`, dan `revalidatePath("/")`), lalu mengarahkan kembali ke `/admin`.
+
+2. [components/FormProduk.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/FormProduk.jsx)
+   - Mengelola state form, error, dan pending state menggunakan `useActionState`.
+   - Menambahkan input hidden `<input type="hidden" name="id" value={produk.id} />` saat mode ubah produk.
+   - Mengisi nilai awal form (`defaultValue`) dengan data produk yang ada.
+
+3. [app/admin/produk/[id]/ubah/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/produk/%5Bid%5D/ubah/page.jsx)
+   - Mengambil data produk lama dari database Supabase di sisi server berdasarkan `id` pada URL (`const { id } = await params`).
+   - Memanggil `notFound()` jika produk dengan ID tersebut tidak ditemukan di database.
+   - Mengoper data produk dan aksi `ubahProduk` ke komponen `FormProduk`.
+   - Menghapus komponen `CatatanBelumAktif`.
+   - Proteksi rute US-06 (`proxy.js`) tetap aktif.
+
+4. [app/admin/produk/baru/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/produk/baru/page.jsx)
+   - Disesuaikan agar memanfaatkan `FormProduk` yang sudah terintegrasi secara modular dengan Server Action `tambahProduk`.
+
+---
+
+### Cara Mengetes
+
+1. **Pastikan sudah login sebagai admin**:
+   - Buka `http://localhost:3000/admin/login` dan lakukan login jika belum.
+2. **Buka halaman Ubah Produk**:
+   - Di halaman `/admin`, klik tombol **Ubah** pada salah satu baris produk (misalnya produk ID 1: `http://localhost:3000/admin/produk/1/ubah`).
+   - Periksa bahwa form terisi otomatis dengan data produk yang ada di database.
+   - Pastikan catatan `CatatanBelumAktif` sudah tidak ada di halaman.
+3. **Uji URL Produk Tidak Ditemukan**:
+   - Buka URL produk yang tidak ada, misalnya `http://localhost:3000/admin/produk/99999/ubah`.
+   - Halaman akan menampilkan tampilan "tidak ditemukan" (`404`).
+4. **Uji Validasi Error**:
+   - Kosongkan kolom nama atau ubah harga menjadi nilai negatif, lalu klik **Simpan perubahan**.
+   - Halaman menampilkan pesan validasi error yang sesuai tanpa melakukan pengalihan.
+5. **Uji Ubah Produk Berhasil**:
+   - Ubah salah satu data (misalnya nama atau harga).
+   - Klik **Simpan perubahan**.
+   - Browser akan diarahkan kembali ke `/admin` dan menampilkan data produk yang baru saja diperbarui. Perubahan juga langsung tercermin pada halaman katalog utama (`/`) dan detail produk (`/produk/[id]`).

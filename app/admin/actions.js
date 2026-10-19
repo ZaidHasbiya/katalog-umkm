@@ -145,3 +145,70 @@ export async function tambahProduk(prevState, formData) {
   revalidatePath("/");
   redirect("/admin");
 }
+
+export async function ubahProduk(prevState, formData) {
+  let id = "";
+  try {
+    const supabase = await createSessionClient();
+    const {
+      data: { user },
+      error: userError,
+    } = await supabase.auth.getUser();
+
+    // Wajib periksa login di server sebelum menjalankan aksi yang mengubah data
+    if (userError || !user) {
+      return { error: "Sesi tidak ditemukan atau telah kedaluwarsa. Silakan masuk kembali." };
+    }
+
+    const data = formData instanceof FormData ? formData : prevState;
+    id = data?.get?.("id")?.toString()?.trim() || "";
+    const nama = data?.get?.("nama")?.toString()?.trim() || "";
+    const kategori = data?.get?.("kategori")?.toString()?.trim() || "";
+    const hargaRaw = data?.get?.("harga")?.toString()?.trim() || "";
+    const deskripsi = data?.get?.("deskripsi")?.toString()?.trim() || "";
+    const foto_url = data?.get?.("foto_url")?.toString()?.trim() || "";
+
+    if (!id) {
+      return { error: "ID produk tidak valid." };
+    }
+
+    if (!nama) {
+      return { error: "Nama produk wajib diisi." };
+    }
+
+    if (!kategori) {
+      return { error: "Kategori wajib diisi." };
+    }
+
+    const harga = parseInt(hargaRaw, 10);
+    if (isNaN(harga) || harga < 0) {
+      return { error: "Harga harus berupa angka yang valid dan tidak boleh negatif." };
+    }
+
+    const dataUpdate = {
+      nama,
+      harga,
+      kategori,
+      deskripsi: deskripsi || null,
+      foto_url: foto_url || null,
+    };
+
+    const { error: updateError } = await supabase
+      .from("produk")
+      .update(dataUpdate)
+      .eq("id", id);
+
+    if (updateError) {
+      return { error: updateError.message || "Gagal mengubah produk." };
+    }
+  } catch (err) {
+    return { error: err.message || "Terjadi kesalahan saat mengubah produk." };
+  }
+
+  revalidatePath("/admin");
+  if (id) {
+    revalidatePath(`/produk/${id}`);
+  }
+  revalidatePath("/");
+  redirect("/admin");
+}
