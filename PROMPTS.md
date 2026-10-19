@@ -271,9 +271,60 @@ Pekerjaan untuk **US-04: Login admin** telah selesai.
 ## US-05 Ganti password
 
 **Prompt:**
+Baca docs/user-stories.md bagian US-05.
+
+Buat Server Action ganti password di app/admin/actions.js untuk admin yang sedang login, memakai Supabase Auth. Validasi di server: password baru minimal 8 karakter dan harus sama dengan konfirmasi. Tampilkan pesan berhasil atau pesan error yang jelas di halaman. Sambungkan ke form di app/admin/password/page.jsx tanpa mengubah tampilannya. Hapus CatatanBelumAktif dari halaman ini.
 
 **Hasil:**
+Viewed user-stories.md:46-60
+Viewed page.jsx:1-43
+Viewed actions.js:1-57
+Created actions.js
+Created page.jsx
+Ran command: Test production build for US-05 (`npm run build`)
+Created check-password-html.js
+Ran command: Run check-password-html.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\check-password-html.js`)
+Ran command: Test validations for gantiPasswordAdmin (`node --env-file=.env.local --input-type=module -e "import { gantiPasswordAdmin } from './app/admin/actions.js'; const fd1 = new FormData(); fd1.append('password_baru', '12345'); fd1.append('konfirmasi_password', '12345'); console.log('Short password:', await gantiPasswordAdmin(null, fd1)); const fd2 = new FormData(); fd2.append('password_baru', '12345678'); fd2.append('konfirmasi_password', '12345679'); console.log('Mismatch password:', await gantiPasswordAdmin(null, fd2));"`)
 
+Pekerjaan untuk **US-05: Ganti password** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js)
+   - Menambahkan Server Action `gantiPasswordAdmin` (dan alias `gantiPassword`).
+   - Melakukan validasi di sisi server:
+     - Password baru minimal 8 karakter.
+     - Password baru harus sama dengan konfirmasi password.
+     - Memeriksa sesi admin aktif di server melalui `supabase.auth.getUser()`.
+   - Mengubah password pengguna menggunakan `supabase.auth.updateUser({ password: passwordBaru })`.
+   - Mengembalikan respon sukses (`{ success: true, message: "Password berhasil diganti." }`) atau pesan error yang jelas.
+
+2. [app/admin/password/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/password/page.jsx)
+   - Menghubungkan form ke Server Action `gantiPasswordAdmin` menggunakan `useActionState`.
+   - Menampilkan kotak pesan error jika validasi atau proses penggantian gagal.
+   - Menampilkan kotak pesan sukses jika password berhasil diganti.
+   - Menghapus komponen `CatatanBelumAktif`.
+   - Mempertahankan tampilan dan tata letak halaman asli tanpa perubahan.
+
+---
+
+### Cara Mengetes
+
+1. **Pastikan sudah login sebagai admin**:
+   - Buka `http://localhost:3000/admin/login` dan lakukan login terlebih dahulu.
+2. **Buka halaman ganti password**:
+   - Kunjungi `http://localhost:3000/admin/password`.
+3. **Uji Validasi Password Tidak Sama**:
+   - Masukkan password baru minimal 8 karakter (misal: `password123`).
+   - Masukkan konfirmasi password yang berbeda (misal: `password456`).
+   - Klik **Simpan password** → Muncul pesan error: *"Password baru dan konfirmasi password tidak sama."*
+4. **Uji Validasi Password Kurang dari 8 Karakter**:
+   - Jika validasi HTML5 dilewati atau diisi kurang dari 8 karakter, server akan menolak dengan pesan: *"Password baru minimal 8 karakter."*
+5. **Uji Ganti Password Berhasil**:
+   - Masukkan password baru dan konfirmasi yang sama (minimal 8 karakter).
+   - Klik **Simpan password** → Muncul pesan sukses: *"Password berhasil diganti."*
+   - Coba klik tombol **Keluar**, lalu login kembali di `/admin/login` menggunakan password baru tersebut.
+   
 **Perbaikan:**
 
 ## US-06 Proteksi halaman admin
