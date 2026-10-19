@@ -141,8 +141,49 @@ Terlihat produk id=1 di database sebenarnya bernama "Kopi Spesial" (bukan "Kopi 
 ## US-03 Pesan via WhatsApp
 
 **Prompt:**
+Baca docs/rancangan-teknis.md bagian "Pesan WhatsApp (US-03)".
+
+Ubah components/TombolWhatsApp.jsx menjadi tautan yang membuka https://wa.me/ ke nomor di lib/toko.js, dengan pesan otomatis berisi nama dan harga produk dalam format rupiah. Pesan di-encode dengan encodeURIComponent dan dibuka di tab baru. Pertahankan tampilan tombolnya. Hapus CatatanBelumAktif yang menyebut US-03 di halaman detail produk.
 
 **Hasil:**
+Viewed rancangan-teknis.md:58-68
+Viewed toko.js:1-10
+Viewed TombolWhatsApp.jsx:1-13
+Viewed page.jsx:1-43
+Viewed user-stories.md:27-37
+Viewed PROMPTS.md:125-150
+Viewed format.js:1-8
+Ran command: Search for wa.me in project files (`Select-String -Path "docs\*.md", "lib\*.js", "components\*.jsx", "app\**\*.jsx" -Pattern "wa.me"`)
+Ran command: Search WhatsApp references in docs (`Select-String -Path "docs\*.md" -Pattern "WhatsApp"`)
+Ran command: Search for US-03 in jsx files (`Select-String -Path "app\**\*.jsx", "components\*.jsx" -Pattern "US-03"`)
+Created TombolWhatsApp.jsx
+Ran command: Test production build (`npm run build`)
+Ran command: Verify rendered WhatsApp link (`node -e "fetch('http://localhost:3000/produk/1').then(r=>r.text()).then(t=>{ const match = t.match(/<a[^>]*href=\"(https:\/\/wa\.me\/[^\"]*)\"[^>]*>[\s\S]*?<\/a>/); if (match) { console.log('Found link:', match[0]); console.log('Decoded href:', decodeURIComponent(match[1])); } else { console.log('Link not found!'); } })"`)
+Ran command: Extract rendered WhatsApp link (`node -e 'fetch("http://localhost:3000/produk/1").then(r=>r.text()).then(t=>{ const m = t.match(/href="(https:\/\/wa\.me\/[^"]+)"/); if(m){ console.log("HREF:", m[1]); console.log("DECODED:", decodeURIComponent(m[1])); }else{ console.log("NOT FOUND"); } })'`)
+Created test-wa.js
+Ran command: Run test-wa.js (`node C:\Users\USER\.gemini\antigravity\brain\46e6af9d-ba37-4bd7-bd81-4dde30892c58\scratch\test-wa.js`)
+
+Pekerjaan untuk **US-03: Pesan via WhatsApp** telah selesai.
+
+### File yang Diubah
+
+1. [components/TombolWhatsApp.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/TombolWhatsApp.jsx)
+   - Mengubah elemen `<button>` menjadi elemen `<a>` (tautan) dengan tetap mempertahankan class dan tampilan tombol aslinya.
+   - Mengambil nomor WhatsApp toko dari [lib/toko.js](file:///c:/Users/USER/Documents/katalog-umkm/lib/toko.js).
+   - Membentuk pesan otomatis yang menyertakan nama produk dan harga dalam format rupiah (`formatRupiah`).
+   - Meng-encode pesan menggunakan `encodeURIComponent` dan menambahkan atribut `target="_blank"` serta `rel="noopener noreferrer"` agar terbuka di tab baru.
+   - Pada halaman detail produk ([app/produk/[id]/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/produk/%5Bid%5D/page.jsx)), komponen `CatatanBelumAktif` yang menyebutkan US-03 sudah tidak ada.
+
+---
+
+### Cara Mengetes
+
+1. Buka browser dan akses halaman detail salah satu produk (misalnya: `http://localhost:3000/produk/1`).
+2. Periksa tombol **"Pesan via WhatsApp"**:
+   - Klik tombol tersebut.
+   - Browser akan membuka tab baru ke alamat `https://wa.me/6281261442840?text=...`.
+   - Di tab baru WhatsApp tersebut, teks pesan otomatis sudah terisi dengan nama produk dan harga rupiahnya (contoh: *Halo, saya ingin memesan Kopi Spesial seharga Rp 45.000.*).
+3. Pastikan tidak ada lagi catatan penanda `CatatanBelumAktif` di bawah tombol pemesanan.
 
 **Perbaikan:**
 
