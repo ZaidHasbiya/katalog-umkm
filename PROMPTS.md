@@ -385,9 +385,47 @@ Pekerjaan untuk **US-06: Proteksi halaman admin** telah selesai.
    - Di `http://localhost:3000/admin/login`, lakukan login dengan akun admin Anda.
    - Setelah berhasil masuk, buka `http://localhost:3000/admin` atau menu admin lainnya → Halaman admin terbuka normal tanpa dialihkan.
    - Periksa bahwa halaman `/admin` sudah bersih dari kotak `CatatanBelumAktif`.
-   
+
 **Perbaikan:**
 
 ## Debugging dan fitur bonus
 
-Tambahkan bagian baru untuk setiap error yang kamu perbaiki atau fitur bonus yang kamu kerjakan.
+### US-07 List Produk
+**Prompt:**
+Baca AGENTS.md dan docs/user-stories.md bagian US-07.
+
+Ubah halaman app/admin/page.jsx supaya daftar produk admin diambil dari tabel "produk" di Supabase, bukan dari data contoh. Ambil data di sisi server menggunakan koneksi Supabase yang sudah tersedia di folder lib/supabase.
+
+Tampilkan produk dengan informasi foto, nama, kategori, dan harga dalam format rupiah. Pertahankan tampilan dan komponen yang sudah ada. Jika tabel kosong, tampilkan pesan "Belum ada produk". Jika gagal mengambil data, tampilkan pesan error yang jelas.
+
+Pastikan halaman hanya bisa diakses oleh admin yang sudah login dan jangan mengubah aturan keamanan US-06.
+
+**Hasil:**
+Viewed user-stories.md:66-70
+Viewed page.jsx:1-22
+Viewed TabelProduk.jsx:1-47
+Created page.jsx
+Ran command: Test build for US-07 (`npm run build`)
+
+Build berhasil — `/admin` sekarang `ƒ (Dynamic)`.
+
+Pekerjaan untuk **US-07: List Produk** telah selesai.
+
+### File yang Diubah
+
+**[app/admin/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/page.jsx)**
+- Mengubah komponen menjadi **async Server Component** yang mengambil daftar produk dari tabel `produk` di Supabase menggunakan `createClient()` dari `@/lib/supabase`.
+- Menghapus ketergantungan pada `lib/data-contoh.js`.
+- Menampilkan produk dengan komponen `TabelProduk` (foto, nama, kategori, harga rupiah) — **tampilan tidak diubah**.
+- Jika tabel kosong → menampilkan teks `"Belum ada produk"`.
+- Jika gagal mengambil data → menampilkan kotak pesan error yang jelas.
+- Proteksi halaman admin (US-06) tetap aktif via `proxy.js`.
+
+---
+
+### Cara Mengetes
+
+1. **Login sebagai admin** di `http://localhost:3000/admin/login`.
+2. Buka `http://localhost:3000/admin` → daftar produk ditampilkan dari database Supabase (bukan data contoh).
+3. **Uji tabel kosong**: kosongkan sementara tabel `produk` di Supabase → halaman menampilkan *"Belum ada produk"*.
+4. **Uji penanganan error**: ubah sementara `SUPABASE_SECRET_KEY` ke nilai salah lalu restart server → halaman menampilkan pesan error yang jelas.
