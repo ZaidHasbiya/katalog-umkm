@@ -429,3 +429,72 @@ Pekerjaan untuk **US-07: List Produk** telah selesai.
 2. Buka `http://localhost:3000/admin` → daftar produk ditampilkan dari database Supabase (bukan data contoh).
 3. **Uji tabel kosong**: kosongkan sementara tabel `produk` di Supabase → halaman menampilkan *"Belum ada produk"*.
 4. **Uji penanganan error**: ubah sementara `SUPABASE_SECRET_KEY` ke nilai salah lalu restart server → halaman menampilkan pesan error yang jelas.
+
+### US-08 Tambah produk
+**Prompt:**
+Baca AGENTS.md, aturan keamanan, docs/user-stories.md bagian US-08, dan struktur tabel produk di docs/schema.sql.
+
+Buat fitur tambah produk baru melalui halaman /admin/produk/baru. Sediakan form untuk mengisi data produk sesuai kolom yang tersedia pada tabel "produk" di Supabase, termasuk nama, kategori, harga, deskripsi, dan foto jika kolom serta mekanisme penyimpanan foto sudah tersedia di proyek.
+
+Proses penyimpanan menggunakan Server Action di server dan koneksi Supabase yang sudah ada di folder lib/supabase. Validasi data wajib di server, termasuk nama produk, kategori, dan harga yang valid. Tampilkan pesan error yang jelas jika penyimpanan gagal. Jika berhasil, arahkan kembali ke /admin dan tampilkan produk yang baru ditambahkan.
+
+Pastikan setiap Server Action untuk menambah produk memeriksa autentikasi admin di server sebelum mengubah database. Jangan hanya mengandalkan proteksi tampilan halaman. Pertahankan desain aplikasi dan gunakan komponen yang sudah tersedia jika sesuai.
+
+**Hasil:**
+Viewed actions.js:90-148
+Viewed FormProduk.jsx:1-35
+Ran command: Check public directory (`Get-ChildItem -Path public -Recurse`)
+Viewed page.jsx:1-25
+Created FormProduk.jsx
+Created page.jsx
+Viewed actions.js:98-148
+Ran command: Test production build for US-08 (`npm run build`)
+Ran command: Check produk table (`node --env-file=.env.local -e "import('./lib/supabase/index.js').then(async ({ createClient }) => { const supabase = createClient(); const { data, error } = await supabase.from('produk').select('id, nama, harga, kategori'); console.log('Products:', data); });"`)
+Ran command: Query produk table (`node --env-file=.env.local -e "const { createClient } = require('@supabase/supabase-js'); const c = createClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_SECRET_KEY); c.from('produk').select('id, nama, harga, kategori').then(r => console.log(r.data));"`)
+Ran command: Test unauthenticated insert error (`node --env-file=.env.local --input-type=module -e "import { createServerClient } from '@supabase/ssr'; const cookies = new Map(); const c = createServerClient(process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/, ''), process.env.SUPABASE_PUBLISHABLE_KEY, { cookies: { getAll: () => Array.from(cookies.entries()).map(([name, value]) => ({ name, value })), setAll: (cs) => cs.forEach(x => cookies.set(x.name, x.value)) } }); const { data: unauthInsert, error: unauthErr } = await c.from('produk').insert({ nama: 'Test Tanpa Login', harga: 10000, kategori: 'Test' }); console.log('Unauthenticated insert error:', unauthErr?.message);"`)
+Ran command: Verify build (`npm run build`)
+
+Pekerjaan untuk **US-08: Tambah produk** telah selesai.
+
+### File yang Dibuat & Diubah
+
+1. [app/admin/actions.js](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/actions.js)
+   - Menambahkan Server Action `tambahProduk`:
+     - Memeriksa autentikasi admin di server melalui `supabase.auth.getUser()`.
+     - Memvalidasi data input di server (`nama` wajib, `kategori` wajib, dan `harga` angka valid \(\ge 0\)).
+     - Menyimpan produk baru ke tabel `produk` di Supabase menggunakan koneksi sesi admin (`createSessionClient()`).
+     - Mengembalikan pesan error yang jelas jika validasi gagal atau penyimpanan database bermasalah.
+     - Melakukan revalidasi cache (`revalidatePath("/admin")` & `revalidatePath("/")`), lalu mengarahkan kembali ke `/admin`.
+
+2. [components/FormProduk.jsx](file:///c:/Users/USER/Documents/katalog-umkm/components/FormProduk.jsx)
+   - Menambahkan dukungan atribut `action` dan `isPending` pada elemen `<form>`.
+   - Mengatur tombol submit menjadi `disabled` saat proses penyimpanan berlangsung dengan teks *"Menyimpan..."*.
+   - Mempertahankan seluruh field (nama, harga, kategori, link foto, deskripsi) dan tombol Batal ke `/admin`.
+
+3. [app/admin/produk/baru/page.jsx](file:///c:/Users/USER/Documents/katalog-umkm/app/admin/produk/baru/page.jsx)
+   - Menghubungkan form ke Server Action `tambahProduk` menggunakan `useActionState`.
+   - Menampilkan kotak pesan error jika proses penyimpanan gagal.
+   - Menghapus komponen `CatatanBelumAktif`.
+   - Mempertahankan tata letak dan desain asli.
+
+---
+
+### Cara Mengetes
+
+1. **Login sebagai admin**:
+   - Masuk melalui `http://localhost:3000/admin/login`.
+2. **Buka halaman Tambah Produk**:
+   - Di halaman `/admin`, klik tombol **Tambah produk** (mengarah ke `http://localhost:3000/admin/produk/baru`).
+   - Pastikan tidak ada lagi catatan `CatatanBelumAktif`.
+3. **Uji Validasi Form**:
+   - Kosongkan kolom nama atau kategori, atau isi harga negatif → klik **Simpan produk**.
+   - Halaman menampilkan pesan validasi error yang sesuai (misal: *"Nama produk wajib diisi."* atau *"Harga harus berupa angka yang valid dan tidak boleh negatif."*).
+4. **Uji Tambah Produk Berhasil**:
+   - Isi form dengan data produk baru, misalnya:
+     - Nama produk: `Keripik Tempe Renyah`
+     - Harga (Rp): `18000`
+     - Kategori: `Camilan`
+     - Link foto: `/produk/keripik.svg`
+     - Deskripsi: `Keripik tempe gurih dan renyah.`
+   - Klik **Simpan produk**.
+   - Anda akan diarahkan kembali ke `/admin` dan produk yang baru ditambahkan langsung muncul pada tabel produk admin maupun katalog utama (`/`).
